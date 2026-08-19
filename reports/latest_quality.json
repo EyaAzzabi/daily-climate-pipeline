@@ -1,0 +1,105 @@
+{
+  "checked_at": "2026-08-19T13:31:14+00:00",
+  "row_count": 1200,
+  "passed": true,
+  "results": [
+    {
+      "name": "not_empty",
+      "passed": true,
+      "blocking": true,
+      "detail": "1200 rows received",
+      "failing_rows": 0
+    },
+    {
+      "name": "unique_city_date",
+      "passed": true,
+      "blocking": true,
+      "detail": "0 duplicate (city_id, observed_date) pairs",
+      "failing_rows": 0
+    },
+    {
+      "name": "range_temperature_2m_max",
+      "passed": true,
+      "blocking": true,
+      "detail": "expected -60.0 to 60.0; 0 rows outside",
+      "failing_rows": 0
+    },
+    {
+      "name": "range_temperature_2m_min",
+      "passed": true,
+      "blocking": true,
+      "detail": "expected -70.0 to 50.0; 0 rows outside",
+      "failing_rows": 0
+    },
+    {
+      "name": "range_temperature_2m_mean",
+      "passed": true,
+      "blocking": true,
+      "detail": "expected -65.0 to 55.0; 0 rows outside",
+      "failing_rows": 0
+    },
+    {
+      "name": "range_precipitation_sum",
+      "passed": true,
+      "blocking": true,
+      "detail": "expected 0.0 to 500.0; 0 rows outside",
+      "failing_rows": 0
+    },
+    {
+      "name": "range_windspeed_10m_max",
+      "passed": true,
+      "blocking": true,
+      "detail": "expected 0.0 to 200.0; 0 rows outside",
+      "failing_rows": 0
+    },
+    {
+      "name": "nulls_temperature_2m_max",
+      "passed": true,
+      "blocking": false,
+      "detail": "0 nulls (0.0%), tolerance 10%",
+      "failing_rows": 0
+    },
+    {
+      "name": "nulls_temperature_2m_min",
+      "passed": true,
+      "blocking": false,
+      "detail": "0 nulls (0.0%), tolerance 10%",
+      "failing_rows": 0
+    },
+    {
+      "name": "nulls_temperature_2m_mean",
+      "passed": true,
+      "blocking": false,
+      "detail": "0 nulls (0.0%), tolerance 10%",
+      "failing_rows": 0
+    },
+    {
+      "name": "nulls_precipitation_sum",
+      "passed": true,
+      "blocking": false,
+      "detail": "0 nulls (0.0%), tolerance 10%",
+      "failing_rows": 0
+    },
+    {
+      "name": "nulls_windspeed_10m_max",
+      "passed": true,
+      "blocking": false,
+      "detail": "0 nulls (0.0%), tolerance 10%",
+      "failing_rows": 0
+    },
+    {
+      "name": "max_not_below_min",
+      "passed": true,
+      "blocking": true,
+      "detail": "0 rows where max temperature is below min",
+      "failing_rows": 0
+    },
+    {
+      "name": "completeness_cities",
+      "passed": true,
+      "blocking": false,
+      "detail": "10 of 10 cities present",
+      "failing_rows": 0
+    }
+  ]
+}
