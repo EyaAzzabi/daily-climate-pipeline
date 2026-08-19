@@ -76,7 +76,8 @@ def fetch_city(
             time.sleep(backoff_seconds * (2 ** (attempt - 1)))
 
     raise SourceError(
-        f"failed to fetch {city.name} for {start}..{end} after {max_attempts} attempts: {last_error}"
+        f"failed to fetch {city.name} for {start}..{end} "
+        f"after {max_attempts} attempts: {last_error}"
     )
 
 
