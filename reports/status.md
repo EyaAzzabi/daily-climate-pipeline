@@ -3,4 +3,4 @@
 
 | Run started | Status | Rows | Quality |
 |---|---|---|---|
-| 2026-08-24 19:49 | succeeded | 30 | pass |
+| 2026-08-24 18:51 | succeeded | 10 | pass |
