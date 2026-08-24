@@ -17,7 +17,13 @@ DATA_DIR = Path(os.getenv("PIPELINE_DATA_DIR", ROOT / "data"))
 REPORTS_DIR = Path(os.getenv("PIPELINE_REPORTS_DIR", ROOT / "reports"))
 
 BRONZE_DIR = DATA_DIR / "bronze"
+
+# The DuckDB file is a build artifact, not the record. History is kept in a sorted
+# CSV instead: the database does not compress (4.3 MB per commit, unchanged), so a
+# daily job committing it would add ~1.6 GB of git history a year. The CSV is ~80 KB
+# and stores as a small text delta, and it stays readable in a pull request.
 WAREHOUSE_PATH = DATA_DIR / "climate.duckdb"
+FACTS_CSV = DATA_DIR / "fact_daily_weather.csv"
 
 
 @dataclass(frozen=True)

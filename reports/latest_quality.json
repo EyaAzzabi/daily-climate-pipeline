@@ -1,13 +1,13 @@
 {
-  "checked_at": "2026-08-19T13:31:14+00:00",
-  "row_count": 1200,
+  "checked_at": "2026-08-24T18:49:30+00:00",
+  "row_count": 30,
   "passed": true,
   "results": [
     {
       "name": "not_empty",
       "passed": true,
       "blocking": true,
-      "detail": "1200 rows received",
+      "detail": "30 rows received",
       "failing_rows": 0
     },
     {

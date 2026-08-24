@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from . import quality, sources, warehouse
-from .config import BRONZE_DIR, CITIES, REPORTS_DIR
+from .config import BRONZE_DIR, CITIES, FACTS_CSV, REPORTS_DIR
 
 
 def parse_date(value: str) -> date:
@@ -61,6 +61,13 @@ def run(start: date, end: date, db_path: Path | None = None) -> int:
     con = warehouse.connect(db_path)
     warehouse.upsert_cities(con, CITIES)
 
+    # The DuckDB file is gitignored, so a fresh clone or a CI runner starts empty.
+    # Rehydrate from the committed CSV rather than re-requesting the API, which only
+    # serves a bounded history anyway.
+    restored = warehouse.import_facts(con)
+    if restored:
+        print(f"  restored {restored} rows from {FACTS_CSV.name}")
+
     records, failures = ingest(start, end)
     if records:
         print(f"  bronze -> {write_bronze(records, start, end)}")
@@ -84,6 +91,8 @@ def run(start: date, end: date, db_path: Path | None = None) -> int:
     else:
         rows = warehouse.load_records(con, records)
         warehouse.build_gold(con)
+        total = warehouse.export_facts(con)
+        print(f"  exported {total} rows to {FACTS_CSV.name}")
         status = "succeeded"
         message = "; ".join(failures) if failures else "ok"
         print(f"  loaded {rows} rows, gold tables rebuilt")

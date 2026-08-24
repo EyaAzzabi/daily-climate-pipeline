@@ -17,7 +17,7 @@ from pathlib import Path
 
 import duckdb
 
-from .config import WAREHOUSE_PATH
+from .config import FACTS_CSV, WAREHOUSE_PATH
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS fact_daily_weather (
@@ -200,3 +200,41 @@ def build_gold(con: duckdb.DuckDBPyConnection) -> None:
         ORDER BY avg_temp_mean DESC
         """
     )
+
+
+FACT_COLUMNS = (
+    "city_id, observed_date, temperature_2m_max, temperature_2m_min, "
+    "temperature_2m_mean, precipitation_sum, windspeed_10m_max"
+)
+
+
+def export_facts(con: duckdb.DuckDBPyConnection, path: Path | None = None) -> int:
+    """Write the fact table to a deterministically ordered CSV.
+
+    `loaded_at` is deliberately excluded. It changes on every run, so including it
+    would mark every row dirty in git even when no observation changed -- turning a
+    three-line diff into a full-file rewrite.
+    """
+    path = Path(path or FACTS_CSV)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    con.execute(
+        f"COPY (SELECT {FACT_COLUMNS} FROM fact_daily_weather "
+        f"ORDER BY city_id, observed_date) TO '{path.as_posix()}' (HEADER, DELIMITER ',')"
+    )
+    return con.execute("SELECT count(*) FROM fact_daily_weather").fetchone()[0]
+
+
+def import_facts(con: duckdb.DuckDBPyConnection, path: Path | None = None) -> int:
+    """Rehydrate the fact table from the committed CSV.
+
+    Lets a fresh clone rebuild the warehouse without re-requesting the API, which
+    matters because the archive only serves a bounded history.
+    """
+    path = Path(path or FACTS_CSV)
+    if not path.exists():
+        return 0
+    con.execute(
+        f"INSERT OR REPLACE INTO fact_daily_weather ({FACT_COLUMNS}) "
+        f"SELECT {FACT_COLUMNS} FROM read_csv_auto('{path.as_posix()}')"
+    )
+    return con.execute("SELECT count(*) FROM fact_daily_weather").fetchone()[0]

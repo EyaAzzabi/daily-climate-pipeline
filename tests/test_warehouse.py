@@ -117,3 +117,64 @@ def test_gold_rebuild_is_repeatable(con):
     warehouse.build_gold(con)
     warehouse.build_gold(con)
     assert con.execute("SELECT count(*) FROM gold_monthly_city").fetchone()[0] == 1
+
+
+def test_facts_survive_a_csv_round_trip(con, tmp_path):
+    """The committed CSV must be able to rebuild the warehouse exactly.
+
+    The DuckDB file is gitignored, so this CSV is the only durable record of the
+    history. If the round trip loses or alters a row, the history is gone.
+    """
+    warehouse.load_records(con, rows(n=3))
+    warehouse.load_records(con, rows(city_id="alg", n=2))
+    csv_path = tmp_path / "facts.csv"
+    exported = warehouse.export_facts(con, csv_path)
+    assert exported == 5
+    assert csv_path.exists()
+
+    fresh = warehouse.connect(tmp_path / "fresh.duckdb")
+    warehouse.upsert_cities(fresh, CITIES)
+    restored = warehouse.import_facts(fresh, csv_path)
+    assert restored == 5
+
+    original = con.execute(
+        f"SELECT {warehouse.FACT_COLUMNS} FROM fact_daily_weather ORDER BY 1, 2"
+    ).fetchall()
+    rebuilt = fresh.execute(
+        f"SELECT {warehouse.FACT_COLUMNS} FROM fact_daily_weather ORDER BY 1, 2"
+    ).fetchall()
+    fresh.close()
+    assert original == rebuilt
+
+
+def test_export_excludes_loaded_at(con, tmp_path):
+    """loaded_at changes every run; including it would dirty every row in git."""
+    warehouse.load_records(con, rows(n=2))
+    csv_path = tmp_path / "facts.csv"
+    warehouse.export_facts(con, csv_path)
+    header = csv_path.read_text(encoding="utf-8").splitlines()[0]
+    assert "loaded_at" not in header
+    assert header.startswith("city_id,observed_date")
+
+
+def test_export_is_byte_stable_across_runs(con, tmp_path):
+    """Same data must produce an identical file, or every run shows a spurious diff."""
+    warehouse.load_records(con, rows(n=3))
+    first = tmp_path / "a.csv"
+    second = tmp_path / "b.csv"
+    warehouse.export_facts(con, first)
+    warehouse.export_facts(con, second)
+    assert first.read_bytes() == second.read_bytes()
+
+
+def test_import_is_idempotent(con, tmp_path):
+    warehouse.load_records(con, rows(n=3))
+    csv_path = tmp_path / "facts.csv"
+    warehouse.export_facts(con, csv_path)
+    warehouse.import_facts(con, csv_path)
+    warehouse.import_facts(con, csv_path)
+    assert count(con) == 3
+
+
+def test_import_of_a_missing_file_is_a_no_op(con, tmp_path):
+    assert warehouse.import_facts(con, tmp_path / "absent.csv") == 0

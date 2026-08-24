@@ -1,5 +1,12 @@
 # daily-climate-pipeline
 
+[![Daily ingest](https://github.com/EyaAzzabi/daily-climate-pipeline/actions/workflows/ingest.yml/badge.svg)](https://github.com/EyaAzzabi/daily-climate-pipeline/actions/workflows/ingest.yml)
+[![CI](https://github.com/EyaAzzabi/daily-climate-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/EyaAzzabi/daily-climate-pipeline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![tests](https://img.shields.io/badge/tests-28%20passing-brightgreen.svg)](tests/)
+[![no API key](https://img.shields.io/badge/API%20key-not%20required-success.svg)](#running-it)
+
 A scheduled data pipeline that ingests daily climate observations for ten
 Mediterranean and North African cities, **validates them before they reach the
 warehouse**, and rebuilds its own charts and status page on every run.
@@ -47,9 +54,24 @@ Open-Meteo archive API
         ▼
   gold_monthly_city · gold_city_summary   rebuilt each run
         │
+        ├──► data/fact_daily_weather.csv   the committed record (48 KB)
         ▼
   reports/  ── charts and status.md regenerated, committed by CI
 ```
+
+**What is committed, and what is not.** The DuckDB file is a *build artifact* and is
+gitignored. History lives in a sorted CSV instead, and the pipeline rehydrates the
+warehouse from it on every run — so a fresh clone rebuilds without re-requesting the API.
+
+The reason is arithmetic. The database is 4.3 MB and does not compress, so a job
+committing it daily would add roughly **1.6 GB of git history a year** and the repository
+would be unusable inside twelve months. The CSV is **48 KB**, stores as a small text
+delta, and stays readable in a pull request. `loaded_at` is excluded from the export
+because it changes every run and would otherwise mark every row dirty, turning a
+three-line diff into a full-file rewrite.
+
+Four tests pin this: the round trip is exact, the export is byte-stable across runs,
+`loaded_at` stays out, and re-importing is idempotent.
 
 **Why validation sits before the load.** A blocking failure leaves the warehouse
 byte-identical to how it started. There is no partial write to roll back and no
@@ -149,7 +171,7 @@ export PYTHONPATH=src
 python -m pipeline.run --days 120      # backfill
 python -m pipeline.run                 # yesterday's settled observation
 python scripts/make_report.py          # charts + status.md
-pytest -q                              # 23 tests, no network required
+pytest -q                              # 28 tests, no network required
 ```
 
 No API key. Open-Meteo's archive endpoint is open, which means you can clone this
@@ -165,9 +187,9 @@ so it never gets rediscovered as a bug.
 
 ## Limitations
 
-- **The warehouse is committed to git.** Convenient at 1,200 rows and completely
-  wrong at ten million; at that point this becomes object storage plus a real
-  warehouse. It is a deliberate trade for a repository that is inspectable.
+- **History lives in a CSV in git.** Fine at 1,200 rows and roughly 3,650 a year;
+  completely wrong at ten million, where this becomes object storage plus a real
+  warehouse. It is a deliberate trade for a repository you can inspect in a browser.
 - **No orchestrator.** GitHub Actions cron gives scheduling, retries and logs, but
   no dependency graph or backfill UI. Airflow or Prefect would be the next step,
   and would be over-engineering at ten cities.
