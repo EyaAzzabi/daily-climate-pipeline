@@ -21,6 +21,11 @@ from pipeline import warehouse  # noqa: E402
 from pipeline.config import REPORTS_DIR  # noqa: E402
 
 # Colour-blind-safe pairing, distinguishable in greyscale.
+# Suppress matplotlib's CreationDate stamp: without this an unchanged chart
+# still renders to different bytes, so the daily job would commit both PNGs
+# every morning forever whether or not the data moved.
+PNG_METADATA = {"Software": None, "Creation Time": None}
+
 WARM = "#D55E00"
 COOL = "#0072B2"
 
@@ -54,7 +59,7 @@ def chart_diurnal_range(con, path: Path) -> None:
     sm = plt.cm.ScalarMappable(cmap="coolwarm", norm=norm)
     fig.colorbar(sm, ax=ax, label="mean temperature (°C)")
     fig.tight_layout()
-    fig.savefig(path, dpi=160)
+    fig.savefig(path, dpi=160, metadata=PNG_METADATA)
     plt.close(fig)
 
 
@@ -85,7 +90,7 @@ def chart_monthly_means(con, path: Path) -> None:
     ax.legend(fontsize=8, ncol=2, frameon=False)
     fig.autofmt_xdate()
     fig.tight_layout()
-    fig.savefig(path, dpi=160)
+    fig.savefig(path, dpi=160, metadata=PNG_METADATA)
     plt.close(fig)
 
 
