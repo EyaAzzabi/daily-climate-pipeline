@@ -1,13 +1,13 @@
 {
-  "checked_at": "2026-11-01T13:14:24+00:00",
-  "row_count": 10,
+  "checked_at": "2026-11-02T15:49:05+00:00",
+  "row_count": 2,
   "passed": true,
   "results": [
     {
       "name": "not_empty",
       "passed": true,
       "blocking": true,
-      "detail": "10 rows received",
+      "detail": "2 rows received",
       "failing_rows": 0
     },
     {
@@ -96,10 +96,10 @@
     },
     {
       "name": "completeness_cities",
-      "passed": true,
+      "passed": false,
       "blocking": false,
-      "detail": "10 of 10 cities present",
-      "failing_rows": 0
+      "detail": "2 of 10 cities present",
+      "failing_rows": 8
     }
   ]
 }
